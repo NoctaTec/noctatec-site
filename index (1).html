@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NoctaTec – Software, die nachts weiterarbeitet</title>
+<meta name="description" content="NoctaTec entwickelt Automatisierungen und KI-Assistenten für Sportanlagen. Referenzprojekt: CourtDesk, ein WhatsApp-Assistent für Padel-, Tennis- und Pickleballanlagen.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 25V7l18 18V7' fill='none' stroke='%23fff' stroke-width='3' stroke-linejoin='miter'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --black: #000;
+    --graphite: #0b0c0d;
+    --steel: #8a9298;
+    --ink: #d9dde0;
+    --white: #f4f5f6;
+    --rule: rgba(255, 255, 255, .16);
+    --signal: #ff4d2e;
+    --band: #e9ecee;
+    --head: Bahnschrift, "HelveticaNeue-CondensedBold", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { color-scheme: dark; -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body { margin: 0; background: var(--black); color: var(--ink); font: 400 1.0625rem/1.65 var(--sans); }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+  .wrap { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
+  .skip { position: absolute; left: -999px; top: 0; background: var(--white); color: #000; padding: .6rem 1rem; z-index: 30; }
+  .skip:focus { left: 1rem; top: 1rem; }
+  #progress { position: fixed; inset: 0 0 auto 0; height: 2px; background: var(--signal); transform: scaleX(0); transform-origin: 0 50%; z-index: 20; }
+
+  /* Kopfzeile, verdichtet sich beim Scrollen */
+  header.top { position: sticky; top: 0; z-index: 10; background: rgba(0, 0, 0, .6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--rule); transition: background-color .25s; }
+  header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 2rem; padding-block: 1.3rem; transition: padding .25s; }
+  .brand { display: inline-flex; align-items: center; gap: .7rem; text-decoration: none; color: var(--white); font: 700 1.3rem/1 var(--head); letter-spacing: .14em; text-transform: uppercase; transition: font-size .25s, letter-spacing .25s; }
+  .brand svg { width: 26px; height: 26px; flex: none; transition: width .25s, height .25s; }
+  header.top.small { background: rgba(0, 0, 0, .92); }
+  header.top.small .wrap { padding-block: .55rem; }
+  header.top.small .brand { font-size: 1.05rem; letter-spacing: .2em; }
+  header.top.small .brand svg { width: 20px; height: 20px; }
+  nav.main { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+  nav.main a { text-decoration: none; color: var(--steel); font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding-block: .5rem; border-bottom: 1px solid transparent; }
+  nav.main a:hover { color: var(--white); border-bottom-color: var(--signal); }
+
+  /* Hero */
+  .hero { --p: 0; padding-block: clamp(3rem, 8vw, 6.5rem) clamp(3.5rem, 8vw, 6.5rem); border-bottom: 1px solid var(--rule); overflow: hidden; }
+  .hero .wrap { display: grid; gap: 3.5rem; align-items: center; }
+  @media (min-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr) 380px; } }
+  .hero .copy { transform: translateY(calc(var(--p) * -22px)); opacity: calc(1 - var(--p) * .55); }
+  h1 { margin: 0 0 1.8rem; font: 800 clamp(2.2rem, 5.4vw, 4.6rem)/.98 var(--head); letter-spacing: -.015em; text-transform: uppercase; color: var(--white); text-wrap: balance; }
+  .lead { max-width: 54ch; margin: 0 0 2.2rem; font-size: clamp(1.05rem, 1.8vw, 1.2rem); }
+  .actions { display: flex; flex-wrap: wrap; gap: 1rem 1.8rem; align-items: center; }
+  .btn { display: inline-block; padding: 1rem 1.9rem; background: var(--white); color: #000; font: 700 .85rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; border: 1px solid var(--white); transition: background-color .15s, color .15s; }
+  .btn:hover { background: #000; color: var(--white); }
+  .textlink { font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--white); text-decoration: none; border-bottom: 1px solid var(--signal); padding-block: .4rem; }
+
+  .frame-wrap { justify-self: center; width: 100%; max-width: 380px; transform: rotate(calc(-3deg + var(--p) * 3deg)) scale(calc(1 + var(--p) * .07)); transform-origin: 50% 60%; }
+  .frame { position: relative; width: 100%; padding: 1rem 1rem 2.8rem; border: 1px solid var(--rule); cursor: pointer;
+    background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 24px 24px; background-position: -1px -1px; background-color: #050505; overflow: hidden; }
+  .frame::before, .frame::after { content: ""; position: absolute; width: 18px; height: 18px; border: 2px solid var(--white); pointer-events: none; }
+  .frame::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+  .frame::after { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+  .frame svg { display: block; width: 100%; height: auto; position: relative; }
+  .frame .scan { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--signal); box-shadow: 0 0 14px 2px rgba(255, 77, 46, .6); opacity: 0; pointer-events: none; }
+  .frame .tag { position: absolute; left: .9rem; right: .9rem; bottom: .7rem; margin: 0; font: 500 .68rem/1.3 var(--mono); letter-spacing: .1em; color: var(--steel); text-transform: uppercase; }
+  .court .l { stroke-dasharray: 1; }
+  .court text { font: 500 10px var(--mono); fill: #8a9298; letter-spacing: .06em; }
+  .court .pl { fill: #050505; stroke: #f4f5f6; stroke-width: 1.6; }
+  @media (prefers-reduced-motion: no-preference) {
+    .frame.play .l { animation: draw 1.5s cubic-bezier(.5, 0, .2, 1) backwards; animation-delay: var(--d, 0s); }
+    .frame.play .fade { animation: fadein .7s ease backwards; animation-delay: var(--d, 0s); }
+    .frame.play .pl { transform-box: fill-box; transform-origin: center; animation: pop .6s cubic-bezier(.3, 1.6, .5, 1) backwards; animation-delay: var(--d, 0s); }
+    .frame.play .scan { animation: scan 2.2s ease-in-out 2.9s 1 both; }
+    @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pop { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+    @keyframes scan { 0% { top: 0; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: calc(100% - 2px); opacity: 0; } }
+  }
+
+  /* Auf einen Blick */
+  .band { background: var(--band); color: #000; padding-block: clamp(2rem, 4vw, 3rem); border-bottom: 1px solid #000; }
+  .band .wrap { display: grid; gap: 1.6rem 3rem; }
+  @media (min-width: 820px) { .band .wrap { grid-template-columns: repeat(3, 1fr); } }
+  .fact h3 { margin: 0 0 .35rem; font: 800 1.45rem/1.05 var(--head); letter-spacing: .01em; text-transform: uppercase; color: #000; }
+  .fact p { margin: 0; color: #2b3136; max-width: 36ch; }
+
+  /* Abschnitte */
+  section { padding-block: clamp(3.5rem, 8vw, 6.5rem); scroll-margin-top: 4rem; border-bottom: 1px solid var(--rule); }
+  section.graphite { background: var(--graphite); }
+  h2 { margin: 0 0 2rem; font: 800 clamp(1.9rem, 4.4vw, 3.2rem)/1.02 var(--head); letter-spacing: -.01em; text-transform: uppercase; color: var(--white); max-width: 22ch; text-wrap: balance; }
+  h3 { margin: 0 0 .7rem; font: 700 1.35rem/1.1 var(--head); letter-spacing: .02em; text-transform: uppercase; color: var(--white); }
+
+  .cols { display: grid; border-top: 1px solid var(--white); margin-top: 2.4rem; }
+  .col { padding: 1.8rem 0; border-bottom: 1px solid var(--rule); }
+  .col p { margin: 0; max-width: 46ch; }
+  @media (min-width: 860px) {
+    .cols { grid-template-columns: repeat(3, 1fr); }
+    .col { padding: 2rem 2rem 2.4rem 0; border-bottom: 0; border-right: 1px solid var(--rule); }
+    .col + .col { padding-left: 2rem; }
+    .col:last-child { border-right: 0; }
+  }
+  .col h3 { transition: color .2s; }
+  .col:hover h3 { color: var(--signal); }
+
+  /* Referenzprojekt */
+  .status { display: inline-flex; align-items: center; gap: .6rem; margin: 0 0 1.4rem; font: 500 .78rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); border: 1px solid var(--rule); padding: .55rem .9rem; }
+  .status::before { content: ""; width: 8px; height: 8px; background: var(--signal); flex: none; }
+  .intro { max-width: 64ch; margin: 0 0 2.4rem; font-size: 1.12rem; }
+  dl { margin: 0; border-top: 1px solid var(--white); display: grid; }
+  dl div { padding: 1.3rem 0; border-bottom: 1px solid var(--rule); }
+  @media (min-width: 860px) {
+    dl { grid-template-columns: repeat(3, 1fr); }
+    dl div { padding: 1.5rem 2rem 1.8rem 0; border-bottom: 0; border-right: 1px solid var(--rule); }
+    dl div + div { padding-left: 2rem; }
+    dl div:last-child { border-right: 0; }
+  }
+  dt { margin: 0 0 .5rem; font: 500 .8rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--steel); }
+  dd { margin: 0; max-width: 40ch; }
+
+  /* Anwendungsfälle */
+  .sub { max-width: 62ch; margin: 0 0 2.6rem; }
+  .ph { font: 500 .88em/1 var(--mono); color: #ff6b50; background: rgba(255, 77, 46, .14); padding: .12em .4em; border-radius: 2px; white-space: nowrap; }
+  .uses { display: grid; gap: 2rem; align-items: start; }
+  @media (min-width: 900px) { .uses { grid-template-columns: 1fr 440px; gap: 3.5rem; } }
+  .tabs { display: flex; gap: .6rem; overflow-x: auto; padding-bottom: .4rem; scroll-snap-type: x proximity; }
+  .tab { flex: none; scroll-snap-align: start; text-align: left; cursor: pointer; background: transparent; color: var(--steel); border: 1px solid var(--rule); padding: .9rem 1.1rem; font: inherit; min-width: 13rem; transition: color .15s, border-color .15s, background-color .15s; }
+  .tab b { display: block; font: 700 1.15rem/1.15 var(--head); letter-spacing: .02em; text-transform: uppercase; color: inherit; margin-bottom: .35rem; }
+  .tab span { font: 500 .72rem/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .tab:hover { color: var(--white); border-color: var(--steel); }
+  .tab[aria-selected="true"] { color: var(--white); border-color: var(--white); background: #000; box-shadow: inset 3px 0 0 var(--signal); }
+  @media (min-width: 900px) {
+    .tabs { flex-direction: column; overflow: visible; padding: 0; }
+    .tab { min-width: 0; padding: 1.1rem 1.3rem; }
+  }
+  .benefit { margin: 1.6rem 0 0; padding-top: 1.2rem; border-top: 1px solid var(--rule); max-width: 52ch; color: var(--ink); }
+  .benefit b { color: var(--white); }
+
+  .phone { width: 100%; max-width: 440px; justify-self: center; margin: 0; background: #000; border: 1px solid var(--white); padding: 1.1rem 1.1rem 1.2rem; }
+  .phone .cap { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin: 0 0 1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--rule); font: 500 .72rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--steel); }
+  .replay { background: transparent; border: 1px solid var(--rule); color: var(--ink); font: 500 .7rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: .45rem .7rem; cursor: pointer; }
+  .replay:hover { border-color: var(--white); color: var(--white); }
+  .chatbox { height: 27rem; overflow-y: auto; padding-right: .3rem; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+  .chat[hidden] { display: none; }
+  .pending { display: none !important; }
+  .msg { max-width: 90%; margin: 0 0 .7rem; padding: .7rem .9rem; font-size: .98rem; line-height: 1.5; }
+  .msg.bot { background: #121315; border: 1px solid var(--rule); }
+  .msg.me { margin-left: auto; background: var(--white); color: #000; }
+  .msg.typing { display: inline-flex; gap: .3rem; align-items: center; padding: .85rem .9rem; }
+  .msg.typing i { width: 6px; height: 6px; background: var(--steel); border-radius: 50%; display: block; }
+  .quick { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 .9rem; }
+  .quick span { padding: .4rem .8rem; border: 1px solid var(--steel); font: 500 .78rem/1.2 var(--mono); color: var(--white); transition: background-color .2s, color .2s, border-color .2s; }
+  .quick span.on { background: var(--white); color: #000; border-color: var(--white); }
+  .result { margin: 0 0 .4rem; padding: 1rem; border: 1px solid var(--signal); background: rgba(255, 77, 46, .07); }
+  .result .ok { margin: 0 0 .4rem; font: 800 1.2rem/1.1 var(--head); letter-spacing: .04em; text-transform: uppercase; color: var(--white); }
+  .result .ok::before { content: "\2713"; display: inline-block; margin-right: .5rem; color: var(--signal); }
+  .result p { margin: 0 0 .6rem; font-size: .92rem; }
+  .result pre { margin: 0; padding: .7rem .8rem; overflow-x: auto; background: #000; border: 1px solid var(--rule); font: 500 .72rem/1.6 var(--mono); color: var(--ink); }
+  @media (prefers-reduced-motion: no-preference) {
+    .chat .msg:not(.pending), .chat .quick:not(.pending), .chat .result:not(.pending) { animation: msgin .3s ease backwards; }
+    .typing i { animation: dot 1s infinite ease-in-out; }
+    .typing i:nth-child(2) { animation-delay: .15s; }
+    .typing i:nth-child(3) { animation-delay: .3s; }
+    @keyframes msgin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @keyframes dot { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+  }
+
+  /* Rechner */
+  .calc { display: grid; gap: 2.4rem; align-items: start; }
+  @media (min-width: 900px) { .calc { grid-template-columns: 1.1fr .9fr; gap: 4rem; } }
+  .ctl { margin: 0 0 1.5rem; }
+  .ctl label { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; font-size: .98rem; }
+  .ctl output { font: 700 1rem/1 var(--mono); color: var(--white); white-space: nowrap; }
+  input[type="range"] { width: 100%; accent-color: var(--signal); height: 1.6rem; cursor: pointer; }
+  .out { background: var(--band); color: #000; padding: clamp(1.6rem, 3vw, 2.4rem); border-top: 6px solid var(--signal); }
+  .out .big { margin: 0; font: 800 clamp(3rem, 8vw, 5rem)/.95 var(--head); letter-spacing: -.01em; text-transform: uppercase; }
+  .out .unit { margin: .3rem 0 1.4rem; font: 500 .8rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #2b3136; }
+  .out .eur { margin: 0 0 1.4rem; font: 700 1.5rem/1.1 var(--head); text-transform: uppercase; }
+  .out .note { margin: 0; font-size: .86rem; line-height: 1.5; color: #2b3136; }
+
+  /* Kontakt */
+  .contact p { max-width: 58ch; margin: 0 0 1.4rem; }
+  .mail { display: inline-block; margin-top: .6rem; font: 800 clamp(1.5rem, 5.4vw, 3.4rem)/1.1 var(--head); letter-spacing: -.005em; color: var(--white); text-decoration: none; border-bottom: 3px solid var(--signal); padding-bottom: .3rem; overflow-wrap: anywhere; }
+  .contact .who { margin: 1.8rem 0 0; font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--steel); }
+
+  /* Fuß mit ausklappbaren Pflichtangaben */
+  footer { padding-block: 0 2.8rem; color: var(--steel); font-size: .92rem; }
+  details { border-bottom: 1px solid var(--rule); }
+  details:first-of-type { border-top: 1px solid var(--rule); }
+  summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem 0; font: 500 .85rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 1.3rem; line-height: 1; color: var(--signal); }
+  details[open] summary::after { content: "\2212"; }
+  summary:hover { color: var(--white); }
+  .legal { padding: .4rem 0 1.8rem; max-width: 72ch; color: var(--ink); }
+  .legal h3 { font: 700 1rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; margin: 1.4rem 0 .35rem; }
+  .legal p { margin: 0 0 .8rem; }
+  footer .tm { max-width: 80ch; margin: 1.8rem 0 0; }
+</style>
+</head>
+<body>
+<div id="progress" aria-hidden="true"></div>
+<a class="skip" href="#inhalt">Zum Inhalt springen</a>
+
+<header class="top" id="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="NoctaTec, zum Seitenanfang">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 27V5l22 22V5" fill="none" stroke="#f4f5f6" stroke-width="3.2" stroke-linejoin="miter"/></svg>
+      NoctaTec
+    </a>
+    <nav class="main" aria-label="Hauptnavigation">
+      <a href="#leistungen">Leistungen</a>
+      <a href="#referenz">Referenzprojekt</a>
+      <a href="#anwendung">Anwendungsfälle</a>
+      <a href="#rechner">Rechner</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inhalt">
+  <div id="top"></div>
+
+  <section class="hero" id="hero" aria-labelledby="titel">
+    <div class="wrap">
+      <div class="copy">
+        <h1 id="titel">Software, die nachts weiterarbeitet.</h1>
+        <p class="lead">NoctaTec entwickelt Automatisierungen und KI-Assistenten für Sportanlagen. Spieler bekommen auch um Mitternacht eine Antwort, und die Anlage findet am nächsten Morgen fertig vorbereitete Daten vor.</p>
+        <div class="actions">
+          <a class="btn" href="mailto:leon@courtdesk.de">Kontakt aufnehmen</a>
+          <a class="textlink" href="#anwendung">Anwendungsfälle ansehen</a>
+        </div>
+      </div>
+
+      <div class="frame-wrap">
+        <div class="frame play" id="frame" title="Antippen, um den Aufbau neu zu starten">
+          <svg class="court" viewBox="0 0 330 440" role="img" aria-label="Technische Zeichnung eines Padelplatzes mit Maßen: 10 mal 20 Meter, Netz in der Mitte, Aufschlaglinien 6,95 Meter vom Netz">
+            <g fill="none" stroke="#f4f5f6" stroke-width="1.6" stroke-linecap="square">
+              <rect class="l" pathLength="1" x="90" y="70" width="150" height="300" style="--d:.3s"/>
+              <line class="l" pathLength="1" x1="90" y1="166" x2="240" y2="166" style="--d:1.2s"/>
+              <line class="l" pathLength="1" x1="90" y1="274" x2="240" y2="274" style="--d:1.4s"/>
+              <line class="l" pathLength="1" x1="165" y1="166" x2="165" y2="274" style="--d:1.65s"/>
+            </g>
+            <line class="l" pathLength="1" x1="72" y1="220" x2="258" y2="220" stroke="#ff4d2e" stroke-width="3" style="--d:2s"/>
+            <g fill="none" stroke="#8a9298" stroke-width="1">
+              <line class="l" pathLength="1" x1="56" y1="70" x2="56" y2="370" style="--d:.1s"/>
+              <line class="fade" x1="50" y1="70" x2="62" y2="70" style="--d:1s"/><line class="fade" x1="50" y1="370" x2="62" y2="370" style="--d:1s"/>
+              <line class="l" pathLength="1" x1="90" y1="44" x2="240" y2="44" style="--d:.1s"/>
+              <line class="fade" x1="90" y1="38" x2="90" y2="50" style="--d:1s"/><line class="fade" x1="240" y1="38" x2="240" y2="50" style="--d:1s"/>
+              <line class="fade" x1="240" y1="166" x2="288" y2="166" style="--d:2.3s"/><line class="fade" x1="240" y1="220" x2="288" y2="220" style="--d:2.3s"/><line class="fade" x1="240" y1="274" x2="288" y2="274" style="--d:2.3s"/>
+            </g>
+            <g class="fade" style="--d:2.4s">
+              <text x="140" y="34">10 M</text>
+              <text transform="translate(40 228) rotate(-90)">20 M</text>
+              <text x="292" y="169">6,95 M</text>
+              <text x="292" y="223" style="fill:#ff4d2e">NETZ</text>
+              <text x="292" y="277">6,95 M</text>
+            </g>
+            <circle class="pl" cx="127" cy="108" r="6" style="--d:2.6s"/>
+            <circle class="pl" cx="203" cy="108" r="6" style="--d:2.7s"/>
+            <circle class="pl" cx="127" cy="332" r="6" style="--d:2.8s"/>
+            <circle class="pl" cx="203" cy="332" r="6" style="--d:2.9s"/>
+          </svg>
+          <div class="scan" aria-hidden="true"></div>
+          <p class="tag">Padelplatz, Maßzeichnung. Antippen für Neustart</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="band">
+    <div class="wrap">
+      <div class="fact"><h3>Läuft auf WhatsApp</h3><p>Spieler schreiben dort, wo sie ohnehin sind. Keine App, kein Login.</p></div>
+      <div class="fact"><h3>Täglich eine Importdatei</h3><p>Neue Mitglieder landen fertig vorbereitet bei der Anlage, ohne Tipparbeit am Empfang.</p></div>
+      <div class="fact"><h3>Offen als KI erkennbar</h3><p>Der Assistent sagt, dass er eine KI ist, und übergibt an einen Menschen, wenn er nicht weiterweiß.</p></div>
+    </div>
+  </div>
+
+  <section id="leistungen" aria-labelledby="leistungen-titel">
+    <div class="wrap">
+      <h2 id="leistungen-titel">Was NoctaTec baut</h2>
+      <div class="cols">
+        <article class="col">
+          <h3>Assistenten im Messenger</h3>
+          <p>Ein digitaler Assistent auf WhatsApp beantwortet Standardfragen zu Öffnungszeiten, Preisen und Abläufen und leitet an einen Menschen weiter, wenn er nicht weiterweiß.</p>
+        </article>
+        <article class="col">
+          <h3>Anmeldungen ohne Tipparbeit</h3>
+          <p>Spieler geben ihre Daten selbst im Chat ein. Der Assistent prüft das Format und erstellt daraus eine Datei, die sich in die Kundenverwaltung der Anlage importieren lässt.</p>
+        </article>
+        <article class="col">
+          <h3>Automatisierung neben dem Bestand</h3>
+          <p>Die Lösungen laufen neben den Systemen, die eine Anlage schon nutzt. Es braucht kein neues Kassen- oder Buchungssystem und keine Schulung für das Team.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="referenz" class="graphite" aria-labelledby="referenz-titel">
+    <div class="wrap">
+      <p class="status">Pilotphase</p>
+      <h2 id="referenz-titel">Referenzprojekt: CourtDesk</h2>
+      <p class="intro">CourtDesk ist ein WhatsApp-Assistent für Anlagen, die ihre Plätze über Playtomic verwalten, also Padel, Tennis oder Pickleball. Er nimmt die Anmeldung für Mitgliedschaften wie Wellpass und Hansefit entgegen, erzeugt täglich eine fertige Importdatei und beantwortet die häufigsten Fragen der Spieler.</p>
+      <dl>
+        <div>
+          <dt>Problem</dt>
+          <dd>Neue Mitglieder müssen einzeln von Hand in der Kundenverwaltung angelegt werden. Dazu kommen täglich dieselben Fragen am Empfang und am Telefon.</dd>
+        </div>
+        <div>
+          <dt>Lösung</dt>
+          <dd>Der Assistent sammelt die Daten im Chat, die Anlage bekommt eine Importdatei im passenden Format. Fragen beantwortet er aus den Informationen der Anlage.</dd>
+        </div>
+        <div>
+          <dt>Stand</dt>
+          <dd>Pilotphase. Die Einrichtung für die ersten Anlagen läuft auf Anfrage.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="anwendung" aria-labelledby="anwendung-titel">
+    <div class="wrap">
+      <h2 id="anwendung-titel">So sieht es für deine Spieler aus</h2>
+      <p class="sub">Die Beispiele zeigen echte Abläufe. <span class="ph">Rot markierte Platzhalter</span> füllt NoctaTec mit den Daten deiner Anlage: Name, Öffnungszeiten, Preise, Regeln.</p>
+
+      <div class="uses">
+        <div>
+          <div class="tabs" role="tablist" aria-label="Anwendungsfälle">
+            <button class="tab" role="tab" id="t1" aria-controls="p1" aria-selected="true" type="button"><b>Mitgliedschaft freischalten</b><span>Pilotphase</span></button>
+            <button class="tab" role="tab" id="t2" aria-controls="p2" aria-selected="false" tabindex="-1" type="button"><b>Fragen beantworten</b><span>Pilotphase</span></button>
+            <button class="tab" role="tab" id="t3" aria-controls="p3" aria-selected="false" tabindex="-1" type="button"><b>Übergabe ans Team</b><span>Pilotphase</span></button>
+            <button class="tab" role="tab" id="t4" aria-controls="p4" aria-selected="false" tabindex="-1" type="button"><b>Freie Plätze und Preise</b><span>In Planung</span></button>
+            <button class="tab" role="tab" id="t5" aria-controls="p5" aria-selected="false" tabindex="-1" type="button"><b>Rabatte und Check-in</b><span>In Planung</span></button>
+          </div>
+          <p class="benefit" id="benefit" aria-live="polite"></p>
+        </div>
+
+        <figure class="phone" id="phone">
+          <figcaption class="cap"><span>Beispielverlauf auf WhatsApp</span><button class="replay" id="replay" type="button">Nochmal abspielen</button></figcaption>
+          <div class="chatbox" id="chatbox">
+
+            <div class="chat" role="tabpanel" id="p1" aria-labelledby="t1" data-benefit="<b>Nutzen für die Anlage:</b> Neue Mitglieder tippen ihre Daten selbst ein. Am Empfang bleibt nur der Import der fertigen Datei.">
+              <p class="msg me">Hallo</p>
+              <p class="msg bot">Hi! Ich bin Paola, der digitale Assistent von <span class="ph">{{DEIN_CLUB}}</span>. Wofür möchtest du freigeschaltet werden? Oder hast du eine Frage?</p>
+              <div class="quick" data-pick="0" aria-hidden="true"><span>Wellpass</span><span>Hansefit/Epassi</span><span>Frage stellen</span></div>
+              <p class="msg me">Wellpass</p>
+              <p class="msg bot">Super! Schick mir jetzt in einer Nachricht deinen Vor- und Nachnamen und die E-Mail deines Playtomic-Kontos.</p>
+              <p class="msg me">Max Mustermann, max@mail.de</p>
+              <p class="msg bot">Bitte kurz prüfen:<br>Name: Max Mustermann<br>E-Mail: max@mail.de<br>Anbieter: Wellpass</p>
+              <div class="quick" data-pick="0" aria-hidden="true"><span>Stimmt</span><span>Korrigieren</span></div>
+              <p class="msg me">Stimmt</p>
+              <p class="msg bot">Fast fertig! Schick mir noch deine 9-stellige Wellpass-TAN, nur die Ziffern.</p>
+              <p class="msg me">123456789</p>
+              <p class="msg bot">Danke, alles gespeichert! Du wirst bis morgen freigeschaltet. Denk daran, vor dem Spiel bei deinem Anbieter einzuchecken.</p>
+              <div class="result">
+                <p class="ok">Angemeldet</p>
+                <p>Die Anlage sieht den Eintrag morgen früh in der Importdatei:</p>
+<pre>name,email,phone_number,gender,birthdate,category_name,category_expires
+Max Mustermann,max@mail.de,,,,Wellpass,</pre>
+              </div>
+            </div>
+
+            <div class="chat" role="tabpanel" id="p2" aria-labelledby="t2" hidden data-benefit="<b>Nutzen für die Anlage:</b> Dieselben Fragen zu Öffnungszeiten, Parken und Leihschlägern beantwortet der Assistent, auch nachts und am Wochenende.">
+              <p class="msg me">Habt ihr sonntags offen? Und kann ich da parken?</p>
+              <p class="msg bot">Sonntags hat <span class="ph">{{DEIN_CLUB}}</span> von <span class="ph">{{ÖFFNUNGSZEIT}}</span> geöffnet. Parken kannst du <span class="ph">{{PARKPLATZ_INFO}}</span>.</p>
+              <p class="msg me">Kann ich Schläger leihen?</p>
+              <p class="msg bot">Leihschläger gibt es am Empfang: <span class="ph">{{LEIHSCHLÄGER_INFO}}</span></p>
+            </div>
+
+            <div class="chat" role="tabpanel" id="p3" aria-labelledby="t3" hidden data-benefit="<b>Nutzen für die Anlage:</b> Sonderfälle landen gebündelt beim Team, nichts geht verloren, und der Spieler wartet nicht im Ungewissen.">
+              <p class="msg me">Wir wollen am Freitag mit 20 Leuten spielen. Geht das?</p>
+              <p class="msg bot">Das klärt am besten das Team. Ich leite deine Nachricht an <span class="ph">{{ANSPRECHPARTNER}}</span> weiter. Du bekommst eine Antwort von einem Menschen.</p>
+            </div>
+
+            <div class="chat" role="tabpanel" id="p4" aria-labelledby="t4" hidden data-benefit="<b>Nutzen für die Anlage:</b> Spieler sehen freie Zeiten, ohne anzurufen. Gebucht wird weiterhin in Playtomic. Dieser Fall ist in Planung.">
+              <p class="msg me">Ist Samstag um 18 Uhr ein Platz frei?</p>
+              <p class="msg bot">Samstag um 18:00 ist <span class="ph">{{FREIER_PLATZ}}</span> frei, <span class="ph">{{PREIS}}</span> pro Platz. Hier kannst du direkt buchen: <span class="ph">{{BUCHUNGSLINK}}</span></p>
+            </div>
+
+            <div class="chat" role="tabpanel" id="p5" aria-labelledby="t5" hidden data-benefit="<b>Nutzen für die Anlage:</b> Weniger Rückfragen zu Rabatten und Check-in. Dieser Fall ist in Planung.">
+              <p class="msg me">Welchen Rabatt bekomme ich mit Wellpass?</p>
+              <p class="msg bot">Mit Wellpass bekommst du bei <span class="ph">{{DEIN_CLUB}}</span> <span class="ph">{{RABATT}}</span> auf deinen Anteil. Wichtig: <span class="ph">{{CHECKIN_REGEL}}</span></p>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="rechner" class="graphite" aria-labelledby="rechner-titel">
+    <div class="wrap">
+      <h2 id="rechner-titel">Was das an Zeit bringt</h2>
+      <p class="sub">Stell die Regler auf deine Anlage. Die Rechnung nimmt an, dass der Assistent 90 % der Anmeldungen und 70 % der Fragen abnimmt.</p>
+      <div class="calc">
+        <div>
+          <div class="ctl"><label for="c-anm">Neue Anmeldungen pro Woche <output id="o-anm" for="c-anm"></output></label><input id="c-anm" type="range" min="3" max="80" step="1" value="15"></div>
+          <div class="ctl"><label for="c-ma">Minuten pro Anmeldung <output id="o-ma" for="c-ma"></output></label><input id="c-ma" type="range" min="1" max="6" step="0.5" value="2"></div>
+          <div class="ctl"><label for="c-fra">Fragen von Spielern pro Tag <output id="o-fra" for="c-fra"></output></label><input id="c-fra" type="range" min="0" max="50" step="1" value="10"></div>
+          <div class="ctl"><label for="c-mf">Minuten pro Frage <output id="o-mf" for="c-mf"></output></label><input id="c-mf" type="range" min="1" max="6" step="0.5" value="2"></div>
+          <div class="ctl"><label for="c-eur">Kosten pro Arbeitsstunde <output id="o-eur" for="c-eur"></output></label><input id="c-eur" type="range" min="12" max="40" step="1" value="14"></div>
+        </div>
+        <div class="out" aria-live="polite">
+          <p class="big" id="r-h">0</p>
+          <p class="unit">Stunden pro Monat frei</p>
+          <p class="eur" id="r-e">0 €</p>
+          <p class="note">Modellrechnung mit Beispielwerten. Deine echten Zahlen kennst nur du. Das Ergebnis ist eine Schätzung und keine Garantie.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="kontakt" class="contact" aria-labelledby="kontakt-titel">
+    <div class="wrap">
+      <h2 id="kontakt-titel">Du betreibst eine Anlage für Padel, Tennis oder Pickleball?</h2>
+      <p>Wenn du wissen möchtest, ob sich ein Assistent bei dir lohnt, schreib eine kurze Nachricht. Gemeinsam schauen wir, welche Fragen und Anmeldungen bei dir täglich Zeit kosten.</p>
+      <p>Der Preis hängt vom Umfang ab. Du bekommst ein individuelles Angebot.</p>
+      <a class="mail" href="mailto:leon@courtdesk.de">leon@courtdesk.de</a>
+      <p class="who">Leon antwortet persönlich</p>
+    </div>
+  </section>
+</main>
+
+<footer id="rechtliches">
+  <div class="wrap">
+    <details id="impressum">
+      <summary>Impressum</summary>
+      <div class="legal">
+        <p>Angaben gemäß § 5 DDG</p>
+        <h3>Anbieter</h3>
+        <p>Leon Geffken<br>handelnd unter der Bezeichnung NoctaTec<br>Werrastraße 38<br>28199 Bremen</p>
+        <h3>Kontakt</h3>
+        <p>E-Mail: <a href="mailto:leon@courtdesk.de">leon@courtdesk.de</a><br>Telefon: <a href="tel:+4915202665878">+49 152 02665878</a></p>
+        <h3>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h3>
+        <p>Leon Geffken, Anschrift wie oben</p>
+        <h3>Verbraucherstreitbeilegung</h3>
+        <p>Wir sind weder bereit noch verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+      </div>
+    </details>
+
+    <details id="datenschutz">
+      <summary>Datenschutzerklärung</summary>
+      <div class="legal">
+        <h3>Verantwortlicher</h3>
+        <p>Leon Geffken, Anschrift und Kontakt siehe Impressum.</p>
+        <h3>Hosting dieser Website</h3>
+        <p>Diese Website wird über GitHub Pages ausgeliefert (GitHub Inc., Microsoft-Konzern, USA). Beim Aufruf verarbeitet der Anbieter technisch notwendige Daten, insbesondere die IP-Adresse, Datum und Uhrzeit sowie die aufgerufene Seite, um die Seite auszuliefern und die Sicherheit zu gewährleisten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Interesse an einem sicheren und stabilen Betrieb). Dabei kann eine Übermittlung in die USA stattfinden, es gelten die vom Anbieter bereitgestellten Garantien nach Art. 46 DSGVO.</p>
+        <h3>Domain und DNS</h3>
+        <p>Die Domain noctatec.de wird über die DNS-Server von Cloudflare aufgelöst. Der Seiteninhalt selbst läuft nicht über Cloudflare.</p>
+        <h3>Cookies, Tracking, Schriftarten</h3>
+        <p>Diese Website setzt keine Cookies, verwendet keine Analyse- oder Werbedienste und lädt keine Schriftarten oder Skripte von Drittanbietern. Es gibt kein Kontaktformular. Der Zeitrechner auf dieser Seite rechnet ausschließlich in deinem Browser, eingegebene Werte werden nicht übertragen.</p>
+        <h3>Kontakt per E-Mail</h3>
+        <p>Wenn du uns schreibst, verarbeiten wir deine E-Mail-Adresse und den Inhalt deiner Nachricht, um sie zu beantworten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b oder f DSGVO. Wir löschen die Daten, sobald die Anfrage erledigt ist und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.</p>
+        <h3>Deine Rechte</h3>
+        <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Du kannst dich außerdem bei einer Datenschutzaufsichtsbehörde beschweren, zum Beispiel bei der Landesbeauftragten für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen.</p>
+      </div>
+    </details>
+
+    <p class="tm">© 2026 NoctaTec. WhatsApp, Wellpass, Hansefit, Epassi und Playtomic sind Marken ihrer jeweiligen Inhaber. NoctaTec steht in keiner Verbindung zu diesen Unternehmen und wird nicht von ihnen gefördert.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var topbar = document.getElementById('topbar');
+  var hero = document.getElementById('hero');
+  var bar = document.getElementById('progress');
+
+  // Scroll: Fortschrittsbalken, verdichtete Kopfzeile, Hero-Bewegung
+  var ticking = false;
+  function onScroll() {
+    var y = window.pageYOffset || document.documentElement.scrollTop;
+    topbar.classList.toggle('small', y > 40);
+    if (!reduce) {
+      var h = document.documentElement, max = h.scrollHeight - h.clientHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, y / max) : 0) + ')';
+      var p = Math.max(0, Math.min(1, y / (hero.offsetHeight * 0.75)));
+      hero.style.setProperty('--p', p.toFixed(3));
+    }
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+  window.addEventListener('resize', onScroll);
+  onScroll();
+
+  // Platz neu aufbauen
+  var frame = document.getElementById('frame');
+  frame.addEventListener('click', function () {
+    frame.classList.remove('play');
+    void frame.offsetWidth;
+    frame.classList.add('play');
+  });
+
+  // Tabs und Chat-Abspielen
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  var panels = tabs.map(function (t) { return document.getElementById(t.getAttribute('aria-controls')); });
+  var box = document.getElementById('chatbox');
+  var benefit = document.getElementById('benefit');
+  var current = 0, run = 0, started = false;
+
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function toBottom() { box.scrollTo({ top: box.scrollHeight, behavior: reduce ? 'auto' : 'smooth' }); }
+  function reset(panel) {
+    Array.prototype.forEach.call(panel.querySelectorAll('.typing'), function (n) { n.parentNode.removeChild(n); });
+    Array.prototype.forEach.call(panel.children, function (el) { el.classList.add('pending'); });
+    Array.prototype.forEach.call(panel.querySelectorAll('.quick span'), function (s) { s.classList.remove('on'); });
+    box.scrollTop = 0;
+  }
+  function showAll(panel) {
+    Array.prototype.forEach.call(panel.children, function (el) { el.classList.remove('pending'); });
+  }
+  async function play(i) {
+    var id = ++run, panel = panels[i];
+    if (reduce) { showAll(panel); return; }
+    reset(panel);
+    await wait(350);
+    var items = Array.prototype.slice.call(panel.children);
+    for (var k = 0; k < items.length; k++) {
+      if (id !== run) return;
+      var el = items[k];
+      if (el.classList.contains('bot')) {
+        var dots = document.createElement('p');
+        dots.className = 'msg bot typing';
+        dots.innerHTML = '<i></i><i></i><i></i>';
+        panel.insertBefore(dots, el);
+        toBottom();
+        await wait(1100);
+        if (id !== run) return;
+        panel.removeChild(dots);
+        el.classList.remove('pending');
+        toBottom();
+        await wait(450);
+      } else if (el.classList.contains('quick')) {
+        el.classList.remove('pending');
+        toBottom();
+        await wait(1000);
+        if (id !== run) return;
+        var pick = parseInt(el.getAttribute('data-pick') || '0', 10);
+        var s = el.querySelectorAll('span')[pick];
+        if (s) s.classList.add('on');
+        await wait(650);
+      } else if (el.classList.contains('me')) {
+        await wait(700);
+        if (id !== run) return;
+        el.classList.remove('pending');
+        toBottom();
+        await wait(350);
+      } else {
+        await wait(500);
+        if (id !== run) return;
+        el.classList.remove('pending');
+        toBottom();
+      }
+    }
+  }
+  function select(i, focus, autoplay) {
+    current = i;
+    tabs.forEach(function (t, k) {
+      var on = k === i;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      panels[k].hidden = !on;
+    });
+    benefit.innerHTML = panels[i].getAttribute('data-benefit') || '';
+    if (focus) tabs[i].focus();
+    if (autoplay) play(i);
+  }
+  panels.forEach(function (p, k) { if (k > 0) p.hidden = true; });
+  select(0, false, false);
+  if (!reduce) reset(panels[0]);
+
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { started = true; select(i, false, true); });
+    t.addEventListener('keydown', function (e) {
+      var k = null;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') k = (i + 1) % tabs.length;
+      if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') k = (i - 1 + tabs.length) % tabs.length;
+      if (k !== null) { e.preventDefault(); started = true; select(k, true, true); }
+    });
+  });
+  document.getElementById('replay').addEventListener('click', function () { started = true; play(current); });
+
+  if (reduce || !('IntersectionObserver' in window)) {
+    showAll(panels[0]);
+  } else {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting && !started) { started = true; play(current); io.disconnect(); }
+      });
+    }, { threshold: 0.5 });
+    io.observe(document.getElementById('phone'));
+  }
+
+  // Rechner
+  function $(id) { return document.getElementById(id); }
+  function fmt(n, d) { return n.toLocaleString('de-DE', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+  function calc() {
+    var anm = +$('c-anm').value, ma = +$('c-ma').value, fra = +$('c-fra').value, mf = +$('c-mf').value, eur = +$('c-eur').value;
+    $('o-anm').textContent = anm;
+    $('o-ma').textContent = fmt(ma, ma % 1 ? 1 : 0) + ' Min.';
+    $('o-fra').textContent = fra;
+    $('o-mf').textContent = fmt(mf, mf % 1 ? 1 : 0) + ' Min.';
+    $('o-eur').textContent = eur + ' €';
+    var stdAnm = anm * 4.33 * ma / 60 * 0.9;
+    var stdFra = fra * 30 * mf / 60 * 0.7;
+    var std = stdAnm + stdFra;
+    $('r-h').textContent = fmt(std, 1);
+    $('r-e').textContent = 'ca. ' + fmt(Math.round(std * eur), 0) + ' € Arbeitszeit pro Monat';
+  }
+  ['c-anm', 'c-ma', 'c-fra', 'c-mf', 'c-eur'].forEach(function (id) { $(id).addEventListener('input', calc); });
+  calc();
+
+  // Pflichtangaben per Link öffnen
+  function openHash() {
+    var id = (location.hash || '').slice(1);
+    var el = id ? document.getElementById(id) : null;
+    if (el && el.tagName === 'DETAILS') { el.open = true; }
+  }
+  window.addEventListener('hashchange', openHash);
+  openHash();
+})();
+</script>
+</body>
+</html>
