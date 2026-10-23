@@ -1,1 +1,312 @@
-NoctaTec – Seite folgt
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NoctaTec – Software, die nachts weiterarbeitet</title>
+<meta name="description" content="NoctaTec entwickelt Automatisierungen und KI-Assistenten für Sportanlagen. Referenzprojekt: CourtDesk, ein WhatsApp-Assistent für Padelhallen.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M7 25V7l18 18V7' fill='none' stroke='%23fff' stroke-width='3' stroke-linejoin='miter'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --black: #000;
+    --panel: #0b0c0d;
+    --steel: #8a9298;
+    --ink: #d9dde0;
+    --white: #f4f5f6;
+    --rule: rgba(255, 255, 255, .16);
+    --signal: #ff5b1f;
+    --head: Bahnschrift, "HelveticaNeue-CondensedBold", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { color-scheme: dark; -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body { margin: 0; background: var(--black); color: var(--ink); font: 400 1.0625rem/1.65 var(--sans); }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+  .wrap { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
+  .skip { position: absolute; left: -999px; top: 0; background: var(--white); color: #000; padding: .6rem 1rem; z-index: 30; }
+  .skip:focus { left: 1rem; top: 1rem; }
+
+  #progress { position: fixed; inset: 0 0 auto 0; height: 2px; background: var(--signal); transform: scaleX(0); transform-origin: 0 50%; z-index: 20; }
+
+  /* Kopfzeile */
+  header.top { position: sticky; top: 0; z-index: 10; background: rgba(0, 0, 0, .78); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--rule); }
+  header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 2rem; padding-block: 1rem; }
+  .brand { display: inline-flex; align-items: center; gap: .7rem; text-decoration: none; color: var(--white); font: 700 1.3rem/1 var(--head); letter-spacing: .14em; text-transform: uppercase; }
+  .brand svg { width: 26px; height: 26px; flex: none; }
+  nav { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+  nav a { text-decoration: none; color: var(--steel); font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding-block: .5rem; border-bottom: 1px solid transparent; }
+  nav a:hover { color: var(--white); border-bottom-color: var(--signal); }
+
+  /* Hero */
+  .hero { padding-block: clamp(3rem, 8vw, 6.5rem) clamp(3.5rem, 8vw, 6.5rem); border-bottom: 1px solid var(--rule); }
+  .hero .wrap { display: grid; gap: 3.5rem; align-items: center; }
+  @media (min-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr) 380px; } }
+  h1 { margin: 0 0 1.8rem; font: 800 clamp(2.2rem, 5.4vw, 4.6rem)/.98 var(--head); letter-spacing: -.015em; text-transform: uppercase; color: var(--white); overflow-wrap: break-word; hyphens: auto; }
+  .lead { max-width: 54ch; margin: 0 0 2.2rem; font-size: clamp(1.05rem, 1.8vw, 1.2rem); color: var(--ink); }
+  .actions { display: flex; flex-wrap: wrap; gap: 1rem 1.8rem; align-items: center; }
+  .btn { display: inline-block; padding: 1rem 1.9rem; background: var(--white); color: #000; font: 700 .85rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; border: 1px solid var(--white); transition: background-color .15s, color .15s; }
+  .btn:hover { background: #000; color: var(--white); }
+  .textlink { font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--white); text-decoration: none; border-bottom: 1px solid var(--signal); padding-block: .4rem; }
+
+  .frame { position: relative; width: 100%; max-width: 380px; justify-self: center; padding: 1rem 1rem 2.6rem; border: 1px solid var(--rule);
+    background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 24px 24px; background-position: -1px -1px; background-color: #050505; overflow: hidden; }
+  .frame::before, .frame::after { content: ""; position: absolute; width: 18px; height: 18px; border: 2px solid var(--white); pointer-events: none; }
+  .frame::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+  .frame::after { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+  .frame svg { display: block; width: 100%; height: auto; position: relative; }
+  .frame .scan { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--signal); box-shadow: 0 0 14px 2px rgba(255, 91, 31, .6); opacity: 0; pointer-events: none; }
+  .frame .tag { position: absolute; left: .9rem; bottom: .7rem; margin: 0; font: 500 .7rem/1 var(--mono); letter-spacing: .1em; color: var(--steel); text-transform: uppercase; }
+  .court .l { stroke-dasharray: 1; }
+  .court text { font: 500 10px var(--mono); fill: #8a9298; letter-spacing: .06em; }
+  @media (prefers-reduced-motion: no-preference) {
+    .court .l { animation: draw 1.7s cubic-bezier(.5, 0, .2, 1) backwards; animation-delay: var(--d, 0s); }
+    @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+    .frame .scan { animation: scan 2.2s ease-in-out 1.4s 1 both; }
+    @keyframes scan { 0% { top: 0; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: calc(100% - 2px); opacity: 0; } }
+  }
+
+  /* Abschnitte */
+  section { padding-block: clamp(3.5rem, 8vw, 6.5rem); scroll-margin-top: 4rem; border-bottom: 1px solid var(--rule); }
+  section.panel { background: var(--panel); }
+  h2 { margin: 0 0 2.6rem; font: 800 clamp(1.9rem, 4.4vw, 3.2rem)/1.02 var(--head); letter-spacing: -.01em; text-transform: uppercase; color: var(--white); max-width: 20ch; overflow-wrap: break-word; hyphens: auto; }
+  h3 { margin: 0 0 .7rem; font: 700 1.35rem/1.1 var(--head); letter-spacing: .02em; text-transform: uppercase; color: var(--white); }
+
+  .cols { display: grid; border-top: 1px solid var(--white); }
+  .col { padding: 1.8rem 0; border-bottom: 1px solid var(--rule); transition: background-color .2s; }
+  .col p { margin: 0; max-width: 46ch; }
+  @media (min-width: 860px) {
+    .cols { grid-template-columns: repeat(3, 1fr); }
+    .col { padding: 2rem 2rem 2.4rem 0; border-bottom: 0; border-right: 1px solid var(--rule); }
+    .col + .col { padding-left: 2rem; }
+    .col:last-child { border-right: 0; }
+  }
+  .col h3 { transition: color .2s; }
+  .col:hover h3 { color: var(--signal); }
+
+  /* Referenzprojekt */
+  .ref { display: grid; gap: 3.5rem; align-items: start; }
+  @media (min-width: 920px) { .ref { grid-template-columns: 1.1fr .9fr; } }
+  .status { display: inline-flex; align-items: center; gap: .6rem; margin: 0 0 1.4rem; font: 500 .78rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); border: 1px solid var(--rule); padding: .55rem .9rem; }
+  .status::before { content: ""; width: 8px; height: 8px; background: var(--signal); flex: none; }
+  .ref .intro { max-width: 58ch; margin: 0 0 2.2rem; }
+  dl { margin: 0; border-top: 1px solid var(--white); }
+  dl div { display: grid; gap: .3rem 2rem; padding-block: 1.2rem; border-bottom: 1px solid var(--rule); }
+  @media (min-width: 560px) { dl div { grid-template-columns: 8rem 1fr; } }
+  dt { font: 500 .8rem/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--steel); }
+  dd { margin: 0; max-width: 56ch; }
+
+  .phone { width: 100%; max-width: 390px; justify-self: center; margin: 0; background: #000; border: 1px solid var(--white); padding: 1.2rem 1.1rem 1.4rem; }
+  .phone .cap { margin: 0 0 1.1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--rule); font: 500 .72rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--steel); }
+  .msg { max-width: 88%; margin: 0 0 .7rem; padding: .7rem .9rem; font-size: .98rem; line-height: 1.45; }
+  .msg.bot { background: #121315; border: 1px solid var(--rule); }
+  .msg.me { margin-left: auto; background: var(--white); color: #000; }
+  .quick { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 .9rem; }
+  .quick span { padding: .4rem .8rem; border: 1px solid var(--steel); font: 500 .78rem/1.2 var(--mono); color: var(--white); }
+
+  /* Kontakt */
+  .contact p { max-width: 56ch; margin: 0 0 1.8rem; }
+  .mail { display: inline-block; font: 800 clamp(1.5rem, 5.4vw, 3.4rem)/1.1 var(--head); letter-spacing: -.005em; color: var(--white); text-decoration: none; border-bottom: 3px solid var(--signal); padding-bottom: .3rem; overflow-wrap: anywhere; }
+  .contact .who { margin: 1.8rem 0 0; font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--steel); }
+
+  /* Rechtstexte */
+  .legal { font-size: .98rem; }
+  .legal .wrap > * { max-width: 70ch; }
+  .legal h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: 1.4rem; }
+  .legal h3 { font: 700 1.05rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; margin: 1.6rem 0 .4rem; }
+  .legal p { margin: 0 0 .9rem; }
+
+  footer { padding-block: 2.2rem 2.8rem; color: var(--steel); font-size: .9rem; }
+  footer .wrap { display: grid; gap: 1.2rem; }
+  footer nav { gap: 1.6rem; }
+  footer .tm { max-width: 80ch; margin: 0; }
+</style>
+</head>
+<body>
+<div id="progress" aria-hidden="true"></div>
+<a class="skip" href="#inhalt">Zum Inhalt springen</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="NoctaTec, zum Seitenanfang">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 27V5l22 22V5" fill="none" stroke="#f4f5f6" stroke-width="3.2" stroke-linejoin="miter"/></svg>
+      NoctaTec
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="#leistungen">Leistungen</a>
+      <a href="#referenz">Referenzprojekt</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inhalt">
+  <div id="top"></div>
+
+  <section class="hero" aria-labelledby="titel">
+    <div class="wrap">
+      <div>
+        <h1 id="titel">Software, die nachts weiterarbeitet.</h1>
+        <p class="lead">NoctaTec entwickelt Automatisierungen und KI-Assistenten für Sportanlagen. Spielerinnen und Spieler bekommen auch um Mitternacht eine Antwort, und die Halle findet am nächsten Morgen fertig vorbereitete Daten vor.</p>
+        <div class="actions">
+          <a class="btn" href="mailto:leon@courtdesk.de">Kontakt aufnehmen</a>
+          <a class="textlink" href="#referenz">Referenzprojekt ansehen</a>
+        </div>
+      </div>
+
+      <div class="frame">
+        <svg class="court" viewBox="0 0 330 440" role="img" aria-label="Technische Zeichnung eines Padelplatzes mit Maßen: 10 mal 20 Meter, Netz in der Mitte, Aufschlaglinien 6,95 Meter vom Netz">
+          <g fill="none" stroke="#f4f5f6" stroke-width="1.6" stroke-linecap="square">
+            <rect class="l" pathLength="1" x="90" y="70" width="150" height="300" style="--d:0s"/>
+            <line class="l" pathLength="1" x1="90" y1="166" x2="240" y2="166" style="--d:.5s"/>
+            <line class="l" pathLength="1" x1="90" y1="274" x2="240" y2="274" style="--d:.65s"/>
+            <line class="l" pathLength="1" x1="165" y1="166" x2="165" y2="274" style="--d:.8s"/>
+          </g>
+          <line class="l" pathLength="1" x1="72" y1="220" x2="258" y2="220" stroke="#ff5b1f" stroke-width="3" style="--d:1.1s"/>
+          <g fill="none" stroke="#8a9298" stroke-width="1">
+            <line class="l" pathLength="1" x1="56" y1="70" x2="56" y2="370" style="--d:.3s"/>
+            <line x1="50" y1="70" x2="62" y2="70"/><line x1="50" y1="370" x2="62" y2="370"/>
+            <line class="l" pathLength="1" x1="90" y1="44" x2="240" y2="44" style="--d:.3s"/>
+            <line x1="90" y1="38" x2="90" y2="50"/><line x1="240" y1="38" x2="240" y2="50"/>
+            <line x1="240" y1="166" x2="288" y2="166"/><line x1="240" y1="220" x2="288" y2="220"/><line x1="240" y1="274" x2="288" y2="274"/>
+          </g>
+          <text x="140" y="34">10 M</text>
+          <text transform="translate(40 228) rotate(-90)">20 M</text>
+          <text x="292" y="169">6,95 M</text>
+          <text x="292" y="223" style="fill:#ff5b1f">NETZ</text>
+          <text x="292" y="277">6,95 M</text>
+        </svg>
+        <div class="scan" aria-hidden="true"></div>
+        <p class="tag">Padelplatz, Maßzeichnung</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="leistungen" aria-labelledby="leistungen-titel">
+    <div class="wrap">
+      <h2 id="leistungen-titel">Was NoctaTec baut</h2>
+      <div class="cols">
+        <article class="col">
+          <h3>Assistenten im Messenger</h3>
+          <p>Ein digitaler Assistent auf WhatsApp beantwortet Standardfragen zu Öffnungszeiten, Preisen und Abläufen. Er gibt sich als KI zu erkennen und leitet an einen Menschen weiter, wenn er nicht weiterweiß.</p>
+        </article>
+        <article class="col">
+          <h3>Anmeldungen ohne Tipparbeit</h3>
+          <p>Spielerinnen und Spieler geben ihre Daten selbst im Chat ein. Der Assistent prüft das Format und erstellt daraus eine Datei, die sich in die Kundenverwaltung der Halle importieren lässt.</p>
+        </article>
+        <article class="col">
+          <h3>Automatisierung neben dem Bestand</h3>
+          <p>Die Lösungen laufen neben den Systemen, die eine Halle schon nutzt. Es braucht kein neues Kassen- oder Buchungssystem und keine Schulung für das Team.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="referenz" class="panel" aria-labelledby="referenz-titel">
+    <div class="wrap">
+      <div class="ref">
+        <div>
+          <p class="status">In Entwicklung, Prototyp in Erprobung</p>
+          <h2 id="referenz-titel">Referenzprojekt: CourtDesk</h2>
+          <p class="intro">CourtDesk ist ein WhatsApp-Assistent für Padelhallen. Er nimmt die Anmeldung für Mitgliedschaften wie Wellpass und Hansefit entgegen, erzeugt täglich eine fertige Importdatei und beantwortet die häufigsten Fragen der Spieler.</p>
+          <dl>
+            <div>
+              <dt>Problem</dt>
+              <dd>Neue Mitglieder müssen einzeln von Hand in der Kundenverwaltung angelegt werden. Dazu kommen täglich dieselben Fragen am Empfang und am Telefon.</dd>
+            </div>
+            <div>
+              <dt>Lösung</dt>
+              <dd>Der Assistent sammelt die Daten im Chat, die Halle bekommt eine Importdatei im passenden Format. Fragen beantwortet er aus den Informationen der Halle.</dd>
+            </div>
+            <div>
+              <dt>Stand</dt>
+              <dd>Der Prototyp wird getestet. Für die erste Halle wird ein Pilotpartner gesucht.</dd>
+            </div>
+          </dl>
+        </div>
+
+        <figure class="phone">
+          <figcaption class="cap">Beispielverlauf, Demo-Halle</figcaption>
+          <p class="msg me">Moin</p>
+          <p class="msg bot">Hi! Ich bin Paola, der digitale Assistent vom Demo-Club. Wofür möchtest du freigeschaltet werden? Oder hast du eine Frage?</p>
+          <div class="quick" aria-hidden="true"><span>Wellpass</span><span>Hansefit/Epassi</span><span>Frage stellen</span></div>
+          <p class="msg me">Wellpass</p>
+          <p class="msg bot">Super! Schick mir jetzt in einer Nachricht deinen Vor- und Nachnamen und die E-Mail deines Playtomic-Kontos.</p>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="kontakt" class="contact" aria-labelledby="kontakt-titel">
+    <div class="wrap">
+      <h2 id="kontakt-titel">Du betreibst eine Padelhalle oder Sportanlage?</h2>
+      <p>Wenn du wissen möchtest, ob sich ein Assistent bei dir lohnt, schreib eine kurze Nachricht. Gemeinsam schauen wir, welche Fragen und Anmeldungen bei dir täglich Zeit kosten.</p>
+      <a class="mail" href="mailto:leon@courtdesk.de">leon@courtdesk.de</a>
+      <p class="who">Leon antwortet persönlich</p>
+    </div>
+  </section>
+
+  <section id="impressum" class="panel legal" aria-labelledby="impressum-titel">
+    <div class="wrap">
+      <h2 id="impressum-titel">Impressum</h2>
+      <p>Angaben gemäß § 5 DDG</p>
+      <h3>Anbieter</h3>
+      <p>Leon Geffken<br>handelnd unter der Bezeichnung NoctaTec<br>Werrastraße 38<br>28199 Bremen</p>
+      <h3>Kontakt</h3>
+      <p>E-Mail: <a href="mailto:leon@courtdesk.de">leon@courtdesk.de</a><br>Telefon: <a href="tel:+4915202665878">0152 02665878</a></p>
+      <h3>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h3>
+      <p>Leon Geffken, Anschrift wie oben</p>
+      <h3>Verbraucherstreitbeilegung</h3>
+      <p>Zur Teilnahme an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle bin ich weder bereit noch verpflichtet.</p>
+    </div>
+  </section>
+
+  <section id="datenschutz" class="legal" aria-labelledby="datenschutz-titel">
+    <div class="wrap">
+      <h2 id="datenschutz-titel">Datenschutzerklärung</h2>
+      <h3>Verantwortlicher</h3>
+      <p>Leon Geffken, Anschrift und Kontakt siehe Impressum.</p>
+      <h3>Hosting dieser Website</h3>
+      <p>Diese Website wird über GitHub Pages ausgeliefert (GitHub Inc., Microsoft-Konzern, USA). Beim Aufruf verarbeitet der Anbieter technisch notwendige Daten, insbesondere die IP-Adresse, Datum und Uhrzeit sowie die aufgerufene Seite, um die Seite auszuliefern und die Sicherheit zu gewährleisten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Interesse an einem sicheren und stabilen Betrieb). Dabei kann eine Übermittlung in die USA stattfinden, es gelten die vom Anbieter bereitgestellten Garantien nach Art. 46 DSGVO.</p>
+      <h3>Domain und DNS</h3>
+      <p>Die Domain noctatec.de wird über die DNS-Server von Cloudflare aufgelöst. Der Seiteninhalt selbst läuft nicht über Cloudflare.</p>
+      <h3>Cookies, Tracking, Schriftarten</h3>
+      <p>Diese Website setzt keine Cookies, verwendet keine Analyse- oder Werbedienste und lädt keine Schriftarten oder Skripte von Drittanbietern. Es gibt kein Kontaktformular.</p>
+      <h3>Kontakt per E-Mail</h3>
+      <p>Wenn du schreibst, verarbeite ich deine E-Mail-Adresse und den Inhalt deiner Nachricht, um sie zu beantworten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b oder f DSGVO. Ich lösche die Daten, sobald die Anfrage erledigt ist und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.</p>
+      <h3>Deine Rechte</h3>
+      <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Du kannst dich außerdem bei einer Datenschutzaufsichtsbehörde beschweren, zum Beispiel bei der Landesbeauftragten für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav aria-label="Rechtliches">
+      <a href="#impressum">Impressum</a>
+      <a href="#datenschutz">Datenschutz</a>
+    </nav>
+    <p class="tm">© 2026 NoctaTec. WhatsApp, Wellpass, Hansefit, Epassi und Playtomic sind Marken ihrer jeweiligen Inhaber. NoctaTec steht in keiner Verbindung zu diesen Unternehmen und wird nicht von ihnen gefördert.</p>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var bar = document.getElementById('progress');
+    if (!bar || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+    function update() {
+      var h = document.documentElement;
+      var max = h.scrollHeight - h.clientHeight;
+      bar.style.transform = 'scaleX(' + (max > 0 ? Math.min(1, h.scrollTop / max) : 0) + ')';
+    }
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  })();
+</script>
+</body>
+</html>
