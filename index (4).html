@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NoctaTec – KI-Assistenten für Sportanlagen</title>
+<meta name="description" content="NoctaTec entwickelt KI-Assistenten, die Sportanlagen Routinearbeit abnehmen. Erstes Produkt: CourtDesk, der WhatsApp-Assistent für Padel-, Tennis- und Pickleballanlagen. Bremen.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23000'/%3E%3Cpath d='M9 26V6l14 20V6' fill='none' stroke='%23fff' stroke-width='2.8'/%3E%3Cline x1='5' y1='29' x2='27' y2='29' stroke='%23ff4d2e' stroke-width='2'/%3E%3C/svg%3E">
+<style>
+  :root {
+    --black: #000;
+    --graphite: #0b0c0d;
+    --steel: #8a9298;
+    --ink: #d9dde0;
+    --white: #f4f5f6;
+    --rule: rgba(255, 255, 255, .16);
+    --signal: #ff4d2e;
+    --band: #e9ecee;
+    --head: Bahnschrift, "HelveticaNeue-CondensedBold", "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { color-scheme: dark; -webkit-text-size-adjust: 100%; overflow-x: clip; }
+  body { overflow-x: clip; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  body { margin: 0; background: var(--black); color: var(--ink); font: 400 1.0625rem/1.65 var(--sans); }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+  .wrap { width: 100%; max-width: 1200px; margin-inline: auto; padding-inline: clamp(1.25rem, 4vw, 2.5rem); }
+  .skip { position: absolute; left: -999px; top: 0; background: var(--white); color: #000; padding: .6rem 1rem; z-index: 30; }
+  .skip:focus { left: 1rem; top: 1rem; }
+  #progress { position: fixed; inset: 0 0 auto 0; height: 2px; background: var(--signal); transform: scaleX(0); transform-origin: 0 50%; z-index: 20; }
+
+  /* Kopfzeile, verdichtet sich beim Scrollen */
+  header.top { position: sticky; top: 0; z-index: 10; background: rgba(0, 0, 0, .6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--rule); transition: background-color .25s; }
+  header.top .wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 2rem; padding-block: 1.3rem; transition: padding .25s; }
+  .brand { display: inline-flex; align-items: center; gap: .7rem; text-decoration: none; color: var(--white); font: 700 1.3rem/1 var(--head); letter-spacing: .14em; text-transform: uppercase; transition: font-size .25s, letter-spacing .25s; }
+  .brand svg { width: 26px; height: 26px; flex: none; transition: width .25s, height .25s; }
+  .brand small { display: block; margin-top: .3rem; font: 500 .62rem/1 var(--mono); letter-spacing: .08em; color: var(--steel); text-transform: none; }
+  header.top.small .brand small { display: none; }
+  header.top.small { background: rgba(0, 0, 0, .92); }
+  header.top.small .wrap { padding-block: .55rem; }
+  header.top.small .brand { font-size: 1.05rem; letter-spacing: .2em; }
+  header.top.small .brand svg { width: 20px; height: 20px; }
+  nav.main { display: flex; gap: 1.8rem; flex-wrap: wrap; }
+  nav.main a { text-decoration: none; color: var(--steel); font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding-block: .5rem; border-bottom: 1px solid transparent; }
+  nav.main a:hover { color: var(--white); border-bottom-color: var(--signal); }
+  @media (max-width: 699px) {
+    nav.main { flex-wrap: nowrap; overflow-x: auto; gap: 1.3rem; width: calc(100% + 2 * clamp(1.25rem, 4vw, 2.5rem)); margin-inline: calc(-1 * clamp(1.25rem, 4vw, 2.5rem)); padding-inline: clamp(1.25rem, 4vw, 2.5rem); scrollbar-width: none; }
+    nav.main::-webkit-scrollbar { display: none; }
+    nav.main a { flex: none; padding-block: .35rem; }
+    header.top.small nav.main { display: none; }
+  }
+
+  /* Hero */
+  .hero { --p: 0; padding-block: clamp(3rem, 8vw, 6.5rem) clamp(3.5rem, 8vw, 6.5rem); border-bottom: 1px solid var(--rule); overflow: hidden; }
+  .hero .wrap { display: grid; gap: 3.5rem; align-items: center; }
+  @media (min-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr) 380px; } }
+  .hero .copy { transform: translateY(calc(var(--p) * -22px)); opacity: calc(1 - var(--p) * .55); }
+  h1 { margin: 0 0 1.8rem; font: 800 clamp(2.2rem, 5.4vw, 4.6rem)/.98 var(--head); letter-spacing: -.015em; text-transform: uppercase; color: var(--white); text-wrap: balance; }
+  .lead { max-width: 54ch; margin: 0 0 2.2rem; font-size: clamp(1.05rem, 1.8vw, 1.2rem); }
+  .actions { display: flex; flex-wrap: wrap; gap: 1rem 1.8rem; align-items: center; }
+  .btn { display: inline-block; padding: 1rem 1.9rem; background: var(--white); color: #000; font: 700 .85rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; border: 1px solid var(--white); transition: background-color .15s, color .15s; }
+  .btn:hover { background: #000; color: var(--white); }
+  .textlink { font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--white); text-decoration: none; border-bottom: 1px solid var(--signal); padding-block: .4rem; }
+
+  .frame-wrap { justify-self: center; width: 100%; max-width: 380px; transform: rotate(calc(-3deg + var(--p) * 3deg)) scale(calc(1 + var(--p) * .07)); transform-origin: 50% 60%; }
+  .frame { position: relative; width: 100%; padding: 1rem 1rem 2.8rem; border: 1px solid var(--rule); cursor: pointer;
+    background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+    background-size: 24px 24px; background-position: -1px -1px; background-color: #050505; overflow: hidden; }
+  .frame::before, .frame::after { content: ""; position: absolute; width: 18px; height: 18px; border: 2px solid var(--white); pointer-events: none; }
+  .frame::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+  .frame::after { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+  .frame svg { display: block; width: 100%; height: auto; position: relative; }
+  .frame .scan { position: absolute; left: 0; right: 0; top: 0; height: 2px; background: var(--signal); box-shadow: 0 0 14px 2px rgba(255, 77, 46, .6); opacity: 0; pointer-events: none; }
+  .frame .tag { position: absolute; left: .9rem; right: .9rem; bottom: .7rem; margin: 0; font: 500 .68rem/1.3 var(--mono); letter-spacing: .1em; color: var(--steel); text-transform: uppercase; }
+  .court .l { stroke-dasharray: 1; }
+  .court text { font: 500 10px var(--mono); fill: #8a9298; letter-spacing: .06em; }
+  .court .pl { fill: #050505; stroke: #f4f5f6; stroke-width: 1.6; }
+  @media (prefers-reduced-motion: no-preference) {
+    .frame.play .l { animation: draw 1.5s cubic-bezier(.5, 0, .2, 1) backwards; animation-delay: var(--d, 0s); }
+    .frame.play .fade { animation: fadein .7s ease backwards; animation-delay: var(--d, 0s); }
+    .frame.play .pl { transform-box: fill-box; transform-origin: center; animation: pop .6s cubic-bezier(.3, 1.6, .5, 1) backwards; animation-delay: var(--d, 0s); }
+    .frame.play .scan { animation: scan 2.2s ease-in-out 2.9s 1 both; }
+    @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+    @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes pop { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }
+    @keyframes scan { 0% { top: 0; opacity: 0; } 12% { opacity: 1; } 88% { opacity: 1; } 100% { top: calc(100% - 2px); opacity: 0; } }
+  }
+
+  /* Auf einen Blick */
+  .band { background: var(--band); color: #000; padding-block: clamp(2rem, 4vw, 3rem); border-bottom: 1px solid #000; }
+  .band .wrap { display: grid; gap: 1.6rem 3rem; }
+  @media (min-width: 820px) { .band .wrap { grid-template-columns: repeat(3, 1fr); } }
+  .fact h3 { margin: 0 0 .35rem; font: 800 1.45rem/1.05 var(--head); letter-spacing: .01em; text-transform: uppercase; color: #000; }
+  .fact p { margin: 0; color: #2b3136; max-width: 36ch; }
+
+  /* Abschnitte */
+  section { padding-block: clamp(3.5rem, 8vw, 6.5rem); scroll-margin-top: 4rem; border-bottom: 1px solid var(--rule); }
+  section.graphite { background: var(--graphite); }
+  h2 { margin: 0 0 2rem; font: 800 clamp(1.9rem, 4.4vw, 3.2rem)/1.02 var(--head); letter-spacing: -.01em; text-transform: uppercase; color: var(--white); max-width: 22ch; text-wrap: balance; }
+  h3 { margin: 0 0 .7rem; font: 700 1.35rem/1.1 var(--head); letter-spacing: .02em; text-transform: uppercase; color: var(--white); }
+
+  .cols { display: grid; border-top: 1px solid var(--white); margin-top: 2.4rem; }
+  .col { padding: 1.8rem 0; border-bottom: 1px solid var(--rule); }
+  .col p { margin: 0; max-width: 46ch; }
+  @media (min-width: 860px) {
+    .cols { grid-template-columns: repeat(3, 1fr); }
+    .col { padding: 2rem 2rem 2.4rem 0; border-bottom: 0; border-right: 1px solid var(--rule); }
+    .col + .col { padding-left: 2rem; }
+    .col:last-child { border-right: 0; }
+  }
+  .col h3 { transition: color .2s; }
+  .col:hover h3 { color: var(--signal); }
+
+  /* Vorher / Nachher */
+  .status { display: inline-flex; align-items: center; gap: .6rem; margin: 0 0 1.4rem; font: 500 .78rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); border: 1px solid var(--rule); padding: .55rem .9rem; }
+  .status::before { content: ""; width: 8px; height: 8px; background: var(--signal); flex: none; }
+  .intro { max-width: 64ch; margin: 0 0 2.4rem; font-size: 1.12rem; }
+  dl { margin: 0; border-top: 1px solid var(--white); display: grid; }
+  dl div { padding: 1.3rem 0; border-bottom: 1px solid var(--rule); }
+  @media (min-width: 860px) {
+    dl { grid-template-columns: repeat(3, 1fr); }
+    dl div { padding: 1.5rem 2rem 1.8rem 0; border-bottom: 0; border-right: 1px solid var(--rule); }
+    dl div + div { padding-left: 2rem; }
+    dl div:last-child { border-right: 0; }
+  }
+  dt { margin: 0 0 .5rem; font: 500 .8rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--steel); }
+  dd { margin: 0; max-width: 40ch; }
+  .vs { display: grid; gap: 0; border-top: 1px solid var(--white); }
+  .vs > div { padding: 1.6rem 0; border-bottom: 1px solid var(--rule); }
+  .vs h3 { margin-bottom: .9rem; }
+  .vs ul { margin: 0; padding-left: 1.1rem; }
+  .vs li { margin: 0 0 .45rem; max-width: 46ch; }
+  .vs .time { margin: 1.2rem 0 0; font: 800 clamp(2rem, 5vw, 3rem)/1 var(--head); color: var(--white); }
+  .vs .time small { display: block; margin-top: .4rem; font: 500 .78rem/1.3 var(--mono); color: var(--steel); }
+  .vs .after { box-shadow: inset 0 3px 0 var(--signal); }
+  .vs .after .time { color: var(--signal); }
+  @media (min-width: 860px) {
+    .vs { grid-template-columns: 1fr 1fr; }
+    .vs > div { padding: 2rem 2.4rem 2.4rem 0; border-bottom: 0; }
+    .vs > div + div { padding-left: 2.4rem; border-left: 1px solid var(--rule); }
+  }
+  .vs-note { margin: 1.4rem 0 0; font-size: .86rem; color: var(--steel); max-width: 70ch; }
+  /* Hero-Kennzahl */
+  .save { margin: 2.2rem 0 0; padding-top: 1.2rem; border-top: 1px solid var(--rule); max-width: 46ch; }
+  .save b { display: block; font: 800 clamp(1.6rem, 3.4vw, 2.2rem)/1 var(--head); text-transform: uppercase; color: var(--white); margin-bottom: .35rem; }
+  .save a { color: var(--white); text-decoration-color: var(--signal); text-underline-offset: 3px; }
+  /* Roadmap */
+  .road { display: grid; border-top: 1px solid var(--white); margin-top: 2.4rem; }
+  .road > div { padding: 1.6rem 0; border-bottom: 1px solid var(--rule); min-width: 0; }
+  .road h3 { display: flex; align-items: center; gap: .6rem; }
+  .road h3::before { content: ""; width: 10px; height: 10px; flex: none; border: 2px solid var(--steel); }
+  .road .now h3::before { background: var(--signal); border-color: var(--signal); }
+  .road .next h3::before { border-color: var(--signal); }
+  .road ul { margin: 0; padding-left: 1.1rem; }
+  .road li { margin: 0 0 .45rem; max-width: 40ch; }
+  @media (min-width: 860px) {
+    .road { grid-template-columns: repeat(3, 1fr); }
+    .road > div { padding: 2rem 2rem 2.4rem 0; border-bottom: 0; border-right: 1px solid var(--rule); }
+    .road > div + div { padding-left: 2rem; }
+    .road > div:last-child { border-right: 0; }
+  }
+  .wish { margin-top: 2.4rem; display: flex; flex-wrap: wrap; gap: 1rem 1.6rem; align-items: center; }
+  .wish p { margin: 0; max-width: 46ch; }
+  .video-wrap { display: grid; gap: 2rem; align-items: center; }
+  .video-wrap > * { min-width: 0; }
+  .video-wrap video { display: block; width: 100%; max-width: 340px; justify-self: center; background: #000; border: 1px solid var(--white); }
+  @media (min-width: 860px) { .video-wrap { grid-template-columns: minmax(0, 1fr) 340px; gap: 4rem; } .video-wrap video { justify-self: end; } }
+  .btn.ghost { background: transparent; color: var(--white); }
+  .btn.ghost:hover { background: var(--white); color: #000; }
+  /* Rechner: Rolle */
+  .role { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1.6rem; border: 0; padding: 0; }
+  .role legend { width: 100%; margin-bottom: .6rem; font-size: .98rem; }
+  .role button { flex: 1 1 12rem; text-align: left; cursor: pointer; background: transparent; color: var(--steel); border: 1px solid var(--rule); padding: .8rem 1rem; font: inherit; font-size: .92rem; line-height: 1.35; }
+  .role button b { display: block; color: var(--white); font: 700 1rem/1.2 var(--head); text-transform: uppercase; letter-spacing: .02em; }
+  .role button[aria-pressed="true"] { border-color: var(--white); background: #000; box-shadow: inset 3px 0 0 var(--signal); color: var(--ink); }
+  .out .split { margin: 0 0 1.2rem; font-size: .92rem; color: #2b3136; }
+  .out .days { margin: 0 0 1.4rem; padding: .8rem 0; border-block: 1px solid rgba(0,0,0,.18); font: 700 1.15rem/1.25 var(--head); text-transform: uppercase; }
+  .out .offer { margin: 0 0 1.2rem; font-size: .95rem; }
+
+  /* Anwendungsfälle */
+  .sub { max-width: 62ch; margin: 0 0 2.6rem; }
+  .ph { font: 500 .88em/1 var(--mono); color: #ff6b50; background: rgba(255, 77, 46, .14); padding: .12em .4em; border-radius: 2px; white-space: nowrap; }
+  .uses { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .uses > *, .calc > *, .cols > *, .hero .wrap > * { min-width: 0; }
+  @media (min-width: 900px) { .uses { grid-template-columns: minmax(0, 1fr) 440px; gap: 3.5rem; } }
+  @media (max-width: 899px) {
+    .tabs { margin-inline: calc(-1 * clamp(1.25rem, 4vw, 2.5rem)); padding-inline: clamp(1.25rem, 4vw, 2.5rem); scroll-padding-inline: clamp(1.25rem, 4vw, 2.5rem); -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+    .tab { min-width: 10rem; max-width: 14rem; white-space: normal; }
+    .phone { justify-self: stretch; max-width: none; }
+    .chatbox { height: 24rem; }
+    p.swipe { display: block; margin: .5rem 0 0; font: 500 .72rem/1.3 var(--mono); color: var(--steel); }
+  }
+  .swipe { display: none; }
+  .tabs { display: flex; gap: .6rem; overflow-x: auto; padding-bottom: .4rem; scroll-snap-type: x proximity; }
+  .tab { flex: none; scroll-snap-align: start; text-align: left; cursor: pointer; background: transparent; color: var(--steel); border: 1px solid var(--rule); padding: .9rem 1.1rem; font: inherit; min-width: 13rem; transition: color .15s, border-color .15s, background-color .15s; }
+  .tab b { display: block; font: 700 1.15rem/1.15 var(--head); letter-spacing: .02em; text-transform: uppercase; color: inherit; margin-bottom: .35rem; }
+  .tab span { font: 500 .72rem/1.3 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .tab span.soon { color: var(--signal); }
+  .tab:hover { color: var(--white); border-color: var(--steel); }
+  .tab[aria-selected="true"] { color: var(--white); border-color: var(--white); background: #000; box-shadow: inset 3px 0 0 var(--signal); }
+  @media (min-width: 900px) {
+    .tabs { flex-direction: column; overflow: visible; padding: 0; }
+    .tab { min-width: 0; padding: 1.1rem 1.3rem; }
+  }
+  .benefit { margin: 1.6rem 0 0; padding-top: 1.2rem; border-top: 1px solid var(--rule); max-width: 52ch; color: var(--ink); }
+  .benefit b { color: var(--white); }
+
+  .phone { width: 100%; max-width: 440px; justify-self: center; margin: 0; background: #000; border: 1px solid var(--white); padding: 1.1rem 1.1rem 1.2rem; }
+  .phone .cap { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin: 0 0 1rem; padding-bottom: .8rem; border-bottom: 1px solid var(--rule); font: 500 .72rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--steel); }
+  .replay { background: transparent; border: 1px solid var(--rule); color: var(--ink); font: 500 .7rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: .45rem .7rem; cursor: pointer; }
+  .replay:hover { border-color: var(--white); color: var(--white); }
+  .chatbox { height: 27rem; overflow-y: auto; padding-right: .3rem; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+  .chat[hidden] { display: none; }
+  .pending { display: none !important; }
+  .msg { max-width: 90%; margin: 0 0 .7rem; padding: .7rem .9rem; font-size: .98rem; line-height: 1.5; }
+  .msg.bot { background: #121315; border: 1px solid var(--rule); }
+  .msg.me { margin-left: auto; background: var(--white); color: #000; }
+  .msg.typing { display: inline-flex; gap: .3rem; align-items: center; padding: .85rem .9rem; }
+  .msg.typing i { width: 6px; height: 6px; background: var(--steel); border-radius: 50%; display: block; }
+  .quick { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 .9rem; }
+  .quick span { padding: .4rem .8rem; border: 1px solid var(--steel); font: 500 .78rem/1.2 var(--mono); color: var(--white); transition: background-color .2s, color .2s, border-color .2s; }
+  .quick span.on { background: var(--white); color: #000; border-color: var(--white); }
+  .result { margin: 0 0 .4rem; padding: 1rem; border: 1px solid var(--signal); background: rgba(255, 77, 46, .07); }
+  .result .ok { margin: 0 0 .4rem; font: 800 1.2rem/1.1 var(--head); letter-spacing: .04em; text-transform: uppercase; color: var(--white); }
+  .result .ok::before { content: "\2713"; display: inline-block; margin-right: .5rem; color: var(--signal); }
+  .result p { margin: 0 0 .6rem; font-size: .92rem; }
+  .result pre { margin: 0; padding: .7rem .8rem; overflow-x: auto; background: #000; border: 1px solid var(--rule); font: 500 .72rem/1.6 var(--mono); color: var(--ink); }
+  @media (prefers-reduced-motion: no-preference) {
+    .chat .msg:not(.pending), .chat .quick:not(.pending), .chat .result:not(.pending) { animation: msgin .3s ease backwards; }
+    .typing i { animation: dot 1s infinite ease-in-out; }
+    .typing i:nth-child(2) { animation-delay: .15s; }
+    .typing i:nth-child(3) { animation-delay: .3s; }
+    @keyframes msgin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    @keyframes dot { 0%, 80%, 100% { opacity: .3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+  }
+
+  /* Rechner */
+  .calc { display: grid; gap: 2.4rem; align-items: start; }
+  @media (min-width: 900px) { .calc { grid-template-columns: 1.1fr .9fr; gap: 4rem; } }
+  .ctl { margin: 0 0 1.5rem; }
+  .ctl label { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: .5rem; font-size: .98rem; }
+  .ctl output { font: 700 1rem/1 var(--mono); color: var(--white); white-space: nowrap; }
+  input[type="range"] { width: 100%; accent-color: var(--signal); height: 1.6rem; cursor: pointer; }
+  .out { background: var(--band); color: #000; padding: clamp(1.6rem, 3vw, 2.4rem); border-top: 6px solid var(--signal); }
+  .out .big { margin: 0; font: 800 clamp(3rem, 8vw, 5rem)/.95 var(--head); letter-spacing: -.01em; text-transform: uppercase; }
+  .out .unit { margin: .3rem 0 1.4rem; font: 500 .8rem/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: #2b3136; }
+  .out .eur { margin: 0 0 1.4rem; font: 700 1.5rem/1.1 var(--head); text-transform: uppercase; }
+  .out .note { margin: 0; font-size: .86rem; line-height: 1.5; color: #2b3136; }
+
+  /* Kontakt */
+  .contact p { max-width: 58ch; margin: 0 0 1.4rem; }
+  .mail { display: inline-block; margin-top: .6rem; font: 800 clamp(1.5rem, 5.4vw, 3.4rem)/1.1 var(--head); letter-spacing: -.005em; color: var(--white); text-decoration: none; border-bottom: 3px solid var(--signal); padding-bottom: .3rem; overflow-wrap: anywhere; }
+  .contact .who { margin: 1.8rem 0 0; font: 500 .8rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--steel); }
+
+  /* Fuß mit ausklappbaren Pflichtangaben */
+  footer { padding-block: 0 2.8rem; color: var(--steel); font-size: .92rem; }
+  details { border-bottom: 1px solid var(--rule); }
+  details:first-of-type { border-top: 1px solid var(--rule); }
+  summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem 0; font: 500 .85rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 1.3rem; line-height: 1; color: var(--signal); }
+  details[open] summary::after { content: "\2212"; }
+  summary:hover { color: var(--white); }
+  .legal { padding: .4rem 0 1.8rem; max-width: 72ch; color: var(--ink); }
+  .legal h3 { font: 700 1rem/1.3 var(--sans); letter-spacing: 0; text-transform: none; margin: 1.4rem 0 .35rem; }
+  .legal p { margin: 0 0 .8rem; }
+  footer .tm { max-width: 80ch; margin: 1.8rem 0 0; }
+</style>
+</head>
+<body>
+<a class="skip" href="#inhalt">Zum Inhalt springen</a>
+
+<header class="top" id="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="NoctaTec, zum Seitenanfang">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 26V6l14 20V6" fill="none" stroke="#f4f5f6" stroke-width="2.8"/><line x1="5" y1="29" x2="27" y2="29" stroke="#ff4d2e" stroke-width="2"/></svg>
+      NoctaTec
+    </a>
+    <nav class="main" aria-label="Hauptnavigation">
+      <a href="#was">Was wir tun</a>
+      <a href="#produkt">Produkt</a>
+      <a href="#gruender">Gründer</a>
+      <a href="#kontakt">Kontakt</a>
+    </nav>
+  </div>
+</header>
+
+<main id="inhalt">
+  <div id="top"></div>
+
+  <section class="hero" id="hero" aria-labelledby="titel">
+    <div class="wrap">
+      <div class="copy">
+        <h1 id="titel">KI-Assistenten für Sportanlagen.</h1>
+        <p class="lead">NoctaTec entwickelt Software, die Anlagen Routinearbeit abnimmt: Anmeldungen, Standardfragen und Erreichbarkeit rund um die Uhr. Ein Unternehmen aus Bremen, gebaut für Betreiber, die ihre Zeit für Spieler und Mitglieder brauchen.</p>
+        <div class="actions">
+          <a class="btn" href="https://courtdesk.de">CourtDesk ansehen</a>
+          <a class="textlink" href="#kontakt">Kontakt aufnehmen</a>
+        </div>
+      </div>
+      <div class="frame-wrap">
+        <div class="frame" style="cursor: default">
+          <svg class="court" viewBox="0 0 330 440" role="img" aria-label="N-Monogramm von NoctaTec in technischer Zeichnung">
+            <g fill="none" stroke="#f4f5f6" stroke-width="7" stroke-linecap="square" stroke-linejoin="miter">
+              <path d="M110 330V110l110 220V110"/>
+            </g>
+            <line x1="80" y1="370" x2="250" y2="370" stroke="#ff4d2e" stroke-width="3"/>
+            <g fill="none" stroke="#8a9298" stroke-width="1">
+              <line x1="60" y1="110" x2="60" y2="330"/><line x1="54" y1="110" x2="66" y2="110"/><line x1="54" y1="330" x2="66" y2="330"/>
+              <line x1="110" y1="70" x2="220" y2="70"/><line x1="110" y1="64" x2="110" y2="76"/><line x1="220" y1="64" x2="220" y2="76"/>
+            </g>
+            <text x="138" y="60">NOCTATEC</text>
+          </svg>
+          <p class="tag">NoctaTec, Bremen</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="was" aria-labelledby="was-titel">
+    <div class="wrap">
+      <h2 id="was-titel">Was wir tun</h2>
+      <p class="sub">Viele Anlagen verlieren jede Woche Stunden mit immer gleichen Fragen und Abtipparbeit. Wir bauen Assistenten, die genau das übernehmen, und lassen die Entscheidungen bei den Menschen.</p>
+      <div class="cols">
+        <article class="col">
+          <h3>Routine abnehmen</h3>
+          <p>Assistenten im Messenger beantworten Standardfragen, nehmen Anmeldungen auf und entlasten das Team am Empfang.</p>
+        </article>
+        <article class="col">
+          <h3>Offen und nachvollziehbar</h3>
+          <p>Unsere Assistenten sagen offen, dass sie eine KI sind. Daten werden nur für den genannten Zweck verarbeitet, die Anlage behält die Kontrolle.</p>
+        </article>
+        <article class="col">
+          <h3>Für den Alltag gebaut</h3>
+          <p>Wir arbeiten neben den Systemen, die Anlagen schon nutzen. Kein neues Buchungssystem, keine Schulung. Die Einrichtung übernehmen wir.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="produkt" class="graphite" aria-labelledby="produkt-titel">
+    <div class="wrap">
+      <h2 id="produkt-titel">Erstes Produkt: CourtDesk</h2>
+      <p class="sub">CourtDesk ist ein WhatsApp-Assistent für Padel-, Tennis- und Pickleballanlagen. Er beantwortet Standardfragen, auch nachts und am Wochenende, schaltet Wellpass- und Hansefit-Mitglieder frei und bereitet die Anmeldungen als fertige Playtomic-Importdatei vor.</p>
+      <div class="actions">
+        <a class="btn ghost" href="https://courtdesk.de">courtdesk.de</a>
+        <a class="textlink" href="https://courtdesk.de#video">Demo-Video ansehen</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="gruender" aria-labelledby="gruender-titel">
+    <div class="wrap">
+      <h2 id="gruender-titel">Wer dahintersteckt</h2>
+      <p class="sub">Leon Geffken hat NoctaTec in Bremen gegründet. Er ist Wirtschaftsinformatiker und baut die Produkte selbst. Wer mit NoctaTec spricht, spricht mit ihm.</p>
+    </div>
+  </section>
+
+  <section id="kontakt" class="contact" aria-labelledby="kontakt-titel">
+    <div class="wrap">
+      <h2 id="kontakt-titel">Fragen zu NoctaTec oder CourtDesk?</h2>
+      <p>Schreib eine kurze Nachricht. Wir melden uns persönlich.</p>
+      <a class="mail" href="mailto:kontakt@noctatec.de">kontakt@noctatec.de</a>
+      <p class="who">Leon antwortet persönlich</p>
+    </div>
+  </section>
+</main>
+
+<footer id="rechtliches">
+  <div class="wrap">
+    <details id="impressum">
+      <summary>Impressum</summary>
+      <div class="legal">
+        <p>Angaben gemäß § 5 DDG</p>
+        <h3>Anbieter</h3>
+        <p>Leon Geffken<br>handelnd unter der Bezeichnung NoctaTec<br>Werrastraße 38<br>28199 Bremen</p>
+        <h3>Kontakt</h3>
+        <p>E-Mail: <a href="mailto:kontakt@noctatec.de">kontakt@noctatec.de</a><br>Telefon: <a href="tel:+4915202665878">+49 152 02665878</a></p>
+        <h3>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h3>
+        <p>Leon Geffken, Anschrift wie oben</p>
+        <h3>Verbraucherstreitbeilegung</h3>
+        <p>Wir sind weder bereit noch verpflichtet, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen.</p>
+      </div>
+    </details>
+
+    <details id="datenschutz">
+      <summary>Datenschutzerklärung</summary>
+      <div class="legal">
+        <h3>Verantwortlicher</h3>
+        <p>Leon Geffken, Anschrift und Kontakt siehe Impressum.</p>
+        <h3>Hosting dieser Website</h3>
+        <p>Diese Website wird über GitHub Pages ausgeliefert (GitHub Inc., Microsoft-Konzern, USA). Beim Aufruf verarbeitet der Anbieter technisch notwendige Daten, insbesondere die IP-Adresse, Datum und Uhrzeit sowie die aufgerufene Seite, um die Seite auszuliefern und die Sicherheit zu gewährleisten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (Interesse an einem sicheren und stabilen Betrieb). Dabei kann eine Übermittlung in die USA stattfinden, es gelten die vom Anbieter bereitgestellten Garantien nach Art. 46 DSGVO.</p>
+        <h3>Domain und DNS</h3>
+        <p>Diese Website ist unter noctatec.de erreichbar. Die Domain wird bei aftermarket.de verwaltet, die DNS-Auflösung läuft über Cloudflare, Inc. (USA). Dabei werden technisch notwendige Verbindungsdaten verarbeitet.</p>
+        <h3>Cookies, Tracking, Schriftarten</h3>
+        <p>Diese Website setzt keine Cookies, verwendet keine Analyse- oder Werbedienste und lädt keine Schriftarten oder Skripte von Drittanbietern. Es gibt kein Kontaktformular.</p>
+        <h3>Kontakt per E-Mail</h3>
+        <p>Wenn du uns schreibst, verarbeiten wir deine E-Mail-Adresse und den Inhalt deiner Nachricht, um sie zu beantworten. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b oder f DSGVO. Wir löschen die Daten, sobald die Anfrage erledigt ist und keine gesetzlichen Aufbewahrungspflichten entgegenstehen.</p>
+        <h3>Deine Rechte</h3>
+        <p>Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch. Du kannst dich außerdem bei einer Datenschutzaufsichtsbehörde beschweren, zum Beispiel bei der Landesbeauftragten für Datenschutz und Informationsfreiheit der Freien Hansestadt Bremen.</p>
+      </div>
+    </details>
+
+    <p class="tm">© 2026 NoctaTec, Leon Geffken, Bremen. CourtDesk ist ein Produkt von NoctaTec. WhatsApp, Wellpass, Hansefit, Epassi und Playtomic sind Marken ihrer jeweiligen Inhaber. NoctaTec steht in keiner Verbindung zu diesen Unternehmen und wird nicht von ihnen gefördert.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var t = document.getElementById('topbar');
+  function f() { t.classList.toggle('small', (window.pageYOffset || document.documentElement.scrollTop) > 40); }
+  window.addEventListener('scroll', f, { passive: true });
+  f();
+})();
+</script>
+</body>
+</html>
